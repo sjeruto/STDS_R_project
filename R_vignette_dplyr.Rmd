@@ -1,0 +1,283 @@
+---
+title: "Easy Guide (dplyr)"
+author: "Sharon Chemweno"
+output:
+  pdf_document: default
+  html_document: default
+editor_options:
+  chunk_output_type: inline
+---
+
+```{r setup, echo=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", error = TRUE, warning = FALSE,message = FALSE)
+options(repos = list(CRAN="http://cran.rstudio.com/"))
+```
+
+# Introduction
+
+In this vignette, we will;
+1.	Start with basics - what is a dplyr and its general form;
+2.	Then we will look at data wrangling by using select, mutate, arrange, filter, %>%, group_by and summarise 
+
+We will use ‘USArrests’ available in R. It is made up of arrests per one hundred thousand residents, for murder, assault and rape in each of the fifty states in the USA. The data is based on 1973 and the percentage of population living in the Urban areas is also included.
+
+The goal of this documentation is help you to understand the uses of various functions in the Dplyr package. 
+
+## What is dplyr?
+
+Dplyr package was created by Hadley Wickham as an improvement from the existing package 'plyr'.It is designed to provide an extremely optimized set of routines for dealing with data frames. Dplyr is easy to use and highly useful in manipulating data frames. The package was designed to mitigate problems in R whose solutions is clear and easy to follow.
+
+Some of the key functions provided in the package are:
+1. mutate: Adds new variables/columns or transform existing variables.
+2. arrange: Helps to reorder rows of a data frame
+3. filter: Extracts rows from a data frame based on certain conditions
+4. rename: Renames variables in a data frame
+5. summarise/summarize: Generates summary of variables in a dataset
+6. %>%: (known as the 'pipe' operator) It connects multiple verb actions together into a pipeline.
+7. select: Returns a subset of columns from a data set
+
+
+### Installing the dplyr package:
+
+```{r}
+ install.packages("dplyr")
+```
+
+### Load the package
+
+After installing, the package is loaded using the following code:
+
+```{r}
+ library(dplyr)
+```
+
+
+Load dataset:
+
+```{r}
+ data("USArrests")
+ summary(USArrests)
+```
+ 
+
+
+
+You can see some basic characteristics of the dataset with the dim() and str() functions.
+
+```{r}
+ dim(USArrests)
+str(USArrests)
+names(USArrests)
+```
+ 
+## Using select()
+
+The select() function can be used in several ways;
+
+### 1.	To select a column
+
+```{r}
+x<-select(USArrests,c(Murder, Assault))
+head(x)
+
+```
+
+
+### 2.	To specify a range of variable names.
+
+```{r}
+y<-select(USArrests, Assault: Rape)
+head(y)
+```
+
+
+### 3.	 To omit variables by using the negative sign.
+
+```{r}
+z<-select(USArrests,-c(UrbanPop,Rape))
+head(z)
+```
+
+### 4.	To  specify variable names based on patterns.
+
+```{r}
+USArrests_subset1 <- select(USArrests, starts_with('A'))
+head(USArrests_subset1)
+```
+
+
+## Using mutate()
+The mutate function can be used in various ways in a data frame. It can be used to create new variables that are derived from existing variables.
+
+```{r}
+USArrests_data<- mutate(USArrests, Assault_derived= Assault- mean(Assault, na.rm = TRUE))
+head(USArrests_data)
+```
+
+
+## Using filter()
+The filter() function is used to extract subsets of rows from a data frame.
+
+The function can be used in several ways:
+
+### 1. To extract a row wth a certain required value
+
+For example, using the data extract the rows of the USArrests data frame where the UrbanPop is greater than 50).
+
+```{r}
+new_x<-filter(USArrests, UrbanPop > 50)
+head(new_x)
+summary(new_x)
+```
+
+### 2. To obtain rows from certain conditions;
+
+```{r}
+New_y<-filter(USArrests, UrbanPop > 50 & Murder >7)
+summary(New_y$UrbanPop)
+summary(New_y$Murder) 
+head(New_y)
+summary(y$UrbanPop)
+```
+
+## Using arrange()
+The arrange() function is used to reorder rows of a data frame according to one of the variables. Reordering rows of a data frame (while preserving corresponding order of other columns) is normally a pain to do in R. The arrange() function simplifies the process quite a bit.
+
+The following examples shows how the arrange() function can be used:
+
+### 1. Example 1
+It can be used to arrange a column. Please note, its arranged in ascending order if not specified.
+
+```{r}
+X<-arrange(USArrests, Murder)
+head(select(X, Assault, Murder), 10)
+tail(select(X, Assault, Murder), 10)
+
+```
+
+### 2. Example 2
+In descending order;
+
+
+```{r}
+Y<-arrange(USArrests, desc(Murder))
+head(select(Y, Assault , Murder), 10)
+tail(select(Y, Assault , Murder), 10)
+```
+
+## Using rename()
+The rename() function is designed to make this process easier.
+
+```{r}
+mydata <- rename(USArrests, "Assault Arrests"=Assault, "Urban population"=UrbanPop, "Rape Arrests"=Rape, "Murder Arrests"=Murder)
+head(mydata)
+```
+
+## Using group_by()
+The group_by() function is used to generate summary statistics from the data frame within strata defined by a variable. The group_by() function first sets up how you want to group your data. The general operation here is a combination of splitting a data frame into separate pieces defined by a variable or group of variables (group_by()), and then applying a summary function across those subsets (summarize()).
+
+
+### 1. Grouping with one column
+```{r}
+Murder <- group_by(USArrests, Murder)
+summarise(Murder, mean(Assault), mean(Rape))
+```
+
+### 2. Grouping with mutliple columns
+```{r}
+groupby_Murder_Assault <- group_by(USArrests, Murder, Assault)
+summarise(groupby_Murder_Assault, n = n())
+```
+
+## Using %>%
+The pipeline operator (%>%)is used to string together multiple dplyr functions in a sequence of operations. It takes the output from one function and feed it to the first argument of the next function. Its optimized in such a way to allow you to string operations in a left-to-right fashion, i.e.  first(x) %>% second %>% third
+
+We can see the full use of the %>% operator using the following examples:
+
+### 1. Example 1
+We can pipe the USArrests data frame to the function that will select two columns (Murder and Assault) and then pipe the new data frame to the function head() which will return the head of the new data frame.
+
+```{r}
+USArrests %>%
+select(Murder, Assault) %>%
+head
+```
+
+### 2. Example 2
+To see how it works with other functions such as arrange, select, filter we will select three columns from USArrests data, arrange the rows by the Murder and then arrange the rows by Assault And filter the rows where Murder is greater equals 8 and Assault is greater than 200.
+
+```{r}
+USArrests %>%
+select(Murder, Assault, UrbanPop) %>%
+arrange(Murder, Assault) %>%
+filter(Murder >= 8 & Assault>200)
+```
+
+### 3. Example 3
+To Create a new columns using mutate(), we can add new columns to the data frame. Create a new column called Murder_Assault which is multiplication of Murder and Assault
+
+```{r}
+USArrests<-USArrests %>%
+mutate(Murder_Assault = Murder*Assault)
+head(USArrests)[,c("Murder","Assault","Murder_Assault")]
+```
+
+### 4. Example 4
+
+To create summaries of the data frame using summarise() function for a given column in the data frame such as finding the mean. For example, to compute the average number of Murder, apply the mean() function to the column Murder and call the summary value Mean_Murder. There are many other summary statistics you could consider such sd(), min(), max(), median(), sum(), n() (returns the length of vector), first() (returns first value in vector), last() (returns last value in vector) and n_distinct() (number of distinct values in vector).
+
+```{r}
+USArrests %>%
+summarise(Mean_Murder=mean(Murder),Max_Assault=max(Assault), Min_Rape=min(Rape))
+```
+
+
+# Conclusion
+
+The dplyr package is extremely useful in data wrangling. Much of the data analysis lies in manipulating data to obtain what you are looking for. Its not a surprise that data scientists will find themselves using the dplyr package in their analysis. 
+
+# References
+
+McNeil, D. R. (1977) Interactive Data Analysis. New York: Wiley.
+Wickham, H. and Grolemund, G. (2017) R for Data Science. New York: O'reilly https://r4ds.had.co.nz/transform.html
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
